@@ -139,7 +139,7 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Fault injection
     if (iter == NUM_ITERS/2 && x == 0 && y == 0 && z == 0) {
         PRINTF("[Node %lu]: Injecting fault from resilient EDT (%lu, %lu, %lu)\n", ocrGetLocation(), iter, x, y);
-        ocrNodeFailure();
+        ocrInjectNodeFailure();
     }
 #endif
 

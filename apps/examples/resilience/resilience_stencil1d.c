@@ -41,7 +41,7 @@
 //Configurable params
 #define N       4
 #define XDIM    N   //Number of tiles or blocks in X-dimension
-#define ITERS   N   //Number of iterations in application
+#define ITERS   (N*N)   //Number of iterations in application
 
 //Derived params (DO NOT CHANGE)
 #define NUM_DIMS 1 //(x)
@@ -57,6 +57,13 @@
 
 #define NUM_LOCAL_EDTS 2
 #define INJECT_FAULT 0
+
+#define VERBOSE_PRINT 0
+#if VERBOSE_PRINT
+#define VPRINTF PRINTF
+#else
+#define VPRINTF(...)
+#endif
 
 //Dummy function for local computation EDT on every iteration in each rank
 ocrGuid_t localFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
@@ -127,7 +134,7 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Fault injection
     if (iter == NUM_ITERS/2 && x == 0) {
         PRINTF("[Node %lu]: Injecting fault from resilient EDT (%lu, %lu)\n", ocrGetLocation(), iter, x);
-        ocrNodeFailure();
+        ocrInjectNodeFailure();
     }
 #endif
 
@@ -137,15 +144,17 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         //Create a resilient output DB of this iteration
         void *ptr = NULL;
         ocrDbCreate(&db, (void**)&ptr, sizeof(u64), DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        VPRINTF("[Node %lu](%d, %d): DB Created: 0x%lx\n", ocrGetLocation(), iter, x, db);
         *((u64*)ptr) = USER_KEY((iter + 1), x);
 
         //Perform local computation for output DB of this iteration
-        doLocalComputation(paramc, paramv, depc, depv, db);
+        //doLocalComputation(paramc, paramv, depc, depv, db);
     }
 
     //Satisfy event to transmit DB from this iteration to next iteration (iter + 1) EDT neighbors (x-1, x+1)
     ocrGuid_t oEvt;
     ocrGuidTableGet(USER_KEY((iter + 1), x), &oEvt);
+    VPRINTF("[Node %lu](%d, %d): Event Satisfy: 0x%lx Key: %d DB: 0x%lx\n", ocrGetLocation(), iter, x, oEvt, USER_KEY((iter + 1), x), db);
     ocrEventSatisfy(oEvt, db);
 
     //Schedule EDT for next iteration (iter + 1)
@@ -181,11 +190,13 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Create EDT
     ocrGuid_t rankEdt, outputEvent;
     ocrEdtCreate(&rankEdt, rankEdt_template, NUM_PARAMS, params, NUM_DEPS, deps, EDT_PROP_RESILIENT, NULL_HINT, &outputEvent);
+    VPRINTF("[Node %lu](%d, %d): Edt Created: 0x%lx Deps: (0x%lx, 0x%lx, 0x%lx)\n", ocrGetLocation(), iter, x, rankEdt, deps[0], deps[1], deps[2]);
 
     //Create event for future iteration (iter + 2) and associate with user-defined key
     if ((iter + 2) <= (NUM_ITERS + 1)) {
         ocrGuid_t evt;
         ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
+        VPRINTF("[Node %lu](%d, %d): Event Created: 0x%lx Key: %d\n", ocrGetLocation(), iter, x, evt, USER_KEY((iter + 2), x));
         ocrGuidTablePut(USER_KEY((iter + 2), x), evt);
     }
     return NULL_GUID;
@@ -216,6 +227,7 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     ocrGuid_t shutdown_template, shutdownEdt;
     ocrEdtTemplateCreate(&shutdown_template, shutdownFunc, 0, ITER_SPACE);
     ocrEdtCreate(&shutdownEdt, shutdown_template, 0, NULL, ITER_SPACE, NULL, EDT_PROP_NONE, NULL_HINT, NULL);
+    VPRINTF("[Node %lu]: Shutdown Edt Created: 0x%lx\n", ocrGetLocation(), shutdownEdt);
 
     //Create the rank EDT template
     ocrGuid_t rankEdt_template;
@@ -235,7 +247,7 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         ocrGuid_t db = NULL_GUID;
         void *ptr = NULL;
         ocrDbCreate(&db, (void**)&ptr, sizeof(u64), DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        //PRINTF("[Node %lu]: DB created %lu from EDT (%lu, %lu)\n", ocrGetLocation(), db.guid, 0, i);
+        VPRINTF("[Node %lu](%d, %d): DB Created: 0x%lx\n", ocrGetLocation(), 0, i, db);
         *((u64*)ptr) = USER_KEY(1, i);
         ocrDbRelease(db);
         dbArray[i] = db;
@@ -244,6 +256,7 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         if (NUM_ITERS > 1) {
             ocrGuid_t evt;
             ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
+            VPRINTF("[Node %lu](%d, %d): Event Created: 0x%lx Key: %d\n", ocrGetLocation(), 0, i, evt, USER_KEY(2, i));
             u64 key = USER_KEY(2, i);
             ocrGuidTablePut(key, evt);
         }
@@ -260,6 +273,7 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
 
         ocrGuid_t rankEdt, outputEvent;
         ocrEdtCreate(&rankEdt, rankEdt_template, NUM_PARAMS, params, NUM_DEPS, deps, EDT_PROP_RESILIENT, NULL_HINT, &outputEvent);
+        VPRINTF("[Node %lu](%d, %d): Edt Created: 0x%lx Deps: (0x%lx, 0x%lx, 0x%lx)\n", ocrGetLocation(), 0, i, rankEdt, deps[0], deps[1], deps[2]);
     }
 
     return NULL_GUID;
