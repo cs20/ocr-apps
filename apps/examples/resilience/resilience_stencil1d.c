@@ -40,8 +40,8 @@
 
 //Configurable params
 #define N       4
-#define XDIM    N   //Number of tiles or blocks in X-dimension
-#define ITERS   (N*N)   //Number of iterations in application
+#define XDIM    N       //Number of tiles or blocks in X-dimension
+#define ITERS  (N*N)    //Number of iterations in application
 
 //Derived params (DO NOT CHANGE)
 #define NUM_DIMS 1 //(x)
@@ -148,7 +148,7 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         *((u64*)ptr) = USER_KEY((iter + 1), x);
 
         //Perform local computation for output DB of this iteration
-        //doLocalComputation(paramc, paramv, depc, depv, db);
+        doLocalComputation(paramc, paramv, depc, depv, db);
     }
 
     //Satisfy event to transmit DB from this iteration to next iteration (iter + 1) EDT neighbors (x-1, x+1)
