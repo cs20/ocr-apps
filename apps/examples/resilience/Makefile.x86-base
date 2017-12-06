@@ -51,7 +51,8 @@ TARGET := resilience
 REQ_LIBS :=
 
 # Space separated list of source files
-SRCS := resilience.c
+#SRCS := resilience.c
+SRCS := resilience_stencil2d_ghosts.c
 
 # Additional CFLAGS. By default, it includes
 # all OCR required includes and $(APPS_LIBS_INSTALL)/include
