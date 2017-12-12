@@ -262,13 +262,23 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
         }
 
+#if 0
         // Compute Local 3D Domain
+
+        dptr_out[ ITER_INDEX(0, 0, 0)] =  -dptr[ITER_INDEX(x, y, z)]    +
+                                             (    +
+                                               dptr[ITER_INDEX(x+1, y, z)]   +
+                                              UP_BC                         +
+                                                  dptr[ITER_INDEX(x, y+1, z)]   +
+                                                  FRONT_BC                      +
+                                                  dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+
 
         for ( i = 1; i < LOCAL_MESH_SIZE-1; i++ )
         {
 
 
-           dptr_out[ ITER_INDEX(x, 0, 0)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+           dptr_out[ ITER_INDEX(x, 0, 0)] =  -dptr[ITER_INDEX(x, 0, 0)]    + 
                                                 ( dptr[ITER_INDEX(x-1, y, z)]   + 
                                                   dptr[ITER_INDEX(x+1, y, z)]   + 
                                                   UP_BC                         +
@@ -355,6 +365,8 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         }
         //PRINTF("[Node %lu]: Value of DB[%d] is %f in resilient EDT (%lu, %lu, %lu)\n", ocrGetLocation(), 0, dptr[0], iter, x, y);
         //
+
+#endif
 #endif
 
 #if 0
