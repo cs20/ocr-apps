@@ -265,20 +265,20 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
 #if 0
         // Compute Local 3D Domain
 
-        dptr_out[ ITER_INDEX(0, 0, 0)] =  -dptr[ITER_INDEX(x, y, z)]    +
-                                             (    +
-                                               dptr[ITER_INDEX(x+1, y, z)]   +
-                                              UP_BC                         +
-                                                  dptr[ITER_INDEX(x, y+1, z)]   +
-                                                  FRONT_BC                      +
-                                                  dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+        dptr_out[ ITER_INDEX(0, 0, 0)] =  -dptr[ITER_INDEX(0, 0, 0 )]    +
+                                        (  LEFT_BC +
+                                           dptr[ITER_INDEX(1, 0, 0)]   +
+                                           UP_BC                         +
+                                           dptr[ITER_INDEX(0, 1, 0)]   +
+                                           FRONT_BC                      +
+                                           dptr[ITER_INDEX(0, 0, 1)] ) /6.0 ;
 
 
         for ( i = 1; i < LOCAL_MESH_SIZE-1; i++ )
         {
 
 
-           dptr_out[ ITER_INDEX(x, 0, 0)] =  -dptr[ITER_INDEX(x, 0, 0)]    + 
+           dptr_out[ ITER_INDEX(i, 0, 0)] =  -dptr[ITER_INDEX(x, 0, 0)]    + 
                                                 ( dptr[ITER_INDEX(x-1, y, z)]   + 
                                                   dptr[ITER_INDEX(x+1, y, z)]   + 
                                                   UP_BC                         +
