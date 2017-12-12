@@ -40,10 +40,10 @@
 
 //Configurable params
 #define N       4
-#define XDIM    N   //Number of tiles or blocks on X-dimension
-#define YDIM    N   //Number of tiles or blocks on Y-dimension
-#define ZDIM    N   //Number of tiles or blocks on Z-dimension
-#define ITERS   N   //Number of iterations in application
+#define XDIM    N       //Number of tiles or blocks on X-dimension
+#define YDIM    N       //Number of tiles or blocks on Y-dimension
+#define ZDIM    N       //Number of tiles or blocks on Z-dimension
+#define ITERS  (N*N)    //Number of iterations in application
 
 //Derived params (DO NOT CHANGE)
 #define NUM_DIMS 3 //(x, y, z)
@@ -109,10 +109,11 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Cleanup past iteration (iter - 2) DB and (iter - 1) Events
     ocrGuid_t *guidParamv = (ocrGuid_t*)&(paramv[1 + NUM_DIMS]);
     ocrDbDestroy(guidParamv[1]);
-    if (iter > 2) {
-        ocrGuid_t pEvt;
-        ocrGuidTableRemove(USER_KEY((iter - 2), x, y, z), &pEvt);
-        ocrEventDestroy(pEvt);
+    if (iter > 3) {
+        ocrGuid_t pEvt = NULL_GUID;
+        if (ocrGuidTableRemove(USER_KEY((iter - 2), x, y, z), &pEvt) == 0) {
+            ocrEventDestroy(pEvt);
+        }
     }
 
     //Check for termination condition on this iteration
@@ -142,6 +143,13 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         ocrInjectNodeFailure();
     }
 #endif
+
+    //Create event for future iteration (iter + 2) and associate with user-defined key
+    if ((iter + 2) <= (NUM_ITERS + 1)) {
+        ocrGuid_t evt;
+        ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
+        ocrGuidTablePut(USER_KEY((iter + 2), x, y, z), evt);
+    }
 
     ocrGuid_t db = NULL_GUID;
 
@@ -223,13 +231,6 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Create EDT
     ocrGuid_t rankEdt, outputEvent;
     ocrEdtCreate(&rankEdt, rankEdt_template, NUM_PARAMS, params, NUM_DEPS, deps, EDT_PROP_RESILIENT, NULL_HINT, &outputEvent);
-
-    //Create event for future iteration (iter + 2) and associate with user-defined key
-    if ((iter + 2) <= (NUM_ITERS + 1)) {
-        ocrGuid_t evt;
-        ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
-        ocrGuidTablePut(USER_KEY((iter + 2), x, y, z), evt);
-    }
     return NULL_GUID;
 }
 
@@ -242,9 +243,10 @@ ocrGuid_t shutdownFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         for (j = 0; j < YDIM; j++) {
             for (k = 0; k < ZDIM; k++) {
                 if (NUM_ITERS > 1) {
-                    ocrGuid_t pEvt;
-                    ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i, j, k), &pEvt);
-                    ocrEventDestroy(pEvt);
+                    ocrGuid_t pEvt = NULL_GUID;
+                    if (ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i, j, k), &pEvt) == 0) {
+                        ocrEventDestroy(pEvt);
+                    }
                 }
             }
         }

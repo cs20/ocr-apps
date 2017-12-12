@@ -108,10 +108,12 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Cleanup past iteration (iter - 2) DB and (iter - 1) Events
     ocrGuid_t *guidParamv = (ocrGuid_t*)&(paramv[1 + NUM_DIMS]);
     ocrDbDestroy(guidParamv[1]);
-    if (iter > 2) {
-        ocrGuid_t pEvt;
-        ocrGuidTableRemove(USER_KEY((iter - 2), x), &pEvt);
-        ocrEventDestroy(pEvt);
+    if (iter > 3) {
+        ocrGuid_t pEvt = NULL_GUID;
+        if (ocrGuidTableRemove(USER_KEY((iter - 2), x), &pEvt) == 0) {
+            VPRINTF("[Node %lu](%d, %d): Event Destroy: 0x%lx Key: %d\n", ocrGetLocation(), iter, x, pEvt, USER_KEY((iter - 2), x));
+            ocrEventDestroy(pEvt);
+        }
     }
 
     //Check for termination condition on this iteration
@@ -137,6 +139,14 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         ocrInjectNodeFailure();
     }
 #endif
+
+    //Create event for future iteration (iter + 2) and associate with user-defined key
+    if ((iter + 2) <= (NUM_ITERS + 1)) {
+        ocrGuid_t evt;
+        ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
+        VPRINTF("[Node %lu](%d, %d): Event Created: 0x%lx Key: %d\n", ocrGetLocation(), iter, x, evt, USER_KEY((iter + 2), x));
+        ocrGuidTablePut(USER_KEY((iter + 2), x), evt);
+    }
 
     ocrGuid_t db = NULL_GUID;
 
@@ -191,14 +201,6 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     ocrGuid_t rankEdt, outputEvent;
     ocrEdtCreate(&rankEdt, rankEdt_template, NUM_PARAMS, params, NUM_DEPS, deps, EDT_PROP_RESILIENT, NULL_HINT, &outputEvent);
     VPRINTF("[Node %lu](%d, %d): Edt Created: 0x%lx Deps: (0x%lx, 0x%lx, 0x%lx)\n", ocrGetLocation(), iter, x, rankEdt, deps[0], deps[1], deps[2]);
-
-    //Create event for future iteration (iter + 2) and associate with user-defined key
-    if ((iter + 2) <= (NUM_ITERS + 1)) {
-        ocrGuid_t evt;
-        ocrEventCreate(&evt, OCR_EVENT_STICKY_T, EVT_PROP_TAKES_ARG | EVT_PROP_RESILIENT);
-        VPRINTF("[Node %lu](%d, %d): Event Created: 0x%lx Key: %d\n", ocrGetLocation(), iter, x, evt, USER_KEY((iter + 2), x));
-        ocrGuidTablePut(USER_KEY((iter + 2), x), evt);
-    }
     return NULL_GUID;
 }
 
@@ -209,9 +211,10 @@ ocrGuid_t shutdownFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Cleanup past iteration events (NUM_ITERS)
     for (i = 0; i < XDIM; i++) {
         if (NUM_ITERS > 1) {
-            ocrGuid_t pEvt;
-            ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i), &pEvt);
-            ocrEventDestroy(pEvt);
+            ocrGuid_t pEvt = NULL_GUID;
+            if (ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i), &pEvt) == 0) {
+                ocrEventDestroy(pEvt);
+            }
         }
     }
     ocrShutdown();
