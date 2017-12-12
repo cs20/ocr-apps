@@ -66,8 +66,8 @@
 
 #define USER_KEY_SELF(i, x, y, z)  ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 0)
 #define USER_KEY_LEFT(i, x, y, z)  ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 1)
-#define USER_KEY_RIGHT(i, x, y, z) ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, Z) * NUM_POINTS) + 2)
-#define USER_KEY_UP(i, x, y, z)    ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, Z) * NUM_POINTS) + 3)
+#define USER_KEY_RIGHT(i, x, y, z) ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 2)
+#define USER_KEY_UP(i, x, y, z)    ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 3)
 #define USER_KEY_DOWN(i, x, y ,z)  ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 4)
 #define USER_KEY_FRONT(i, x, y, z)  ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 5)
 #define USER_KEY_BACK(i, x, y, z)  ((i * EVENT_SPACE_PER_ITER) + ( ITER_INDEX(x, y, z) * NUM_POINTS) + 6)
@@ -120,9 +120,9 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     u64 z = paramv[3];
 
     if (iter < NUM_ITERS) {
-       PRINTF("[Node %lu]: Hello from resilient EDT (%lu, %lu, %lu)\n", ocrGetLocation(), iter, x, y);
+       PRINTF("[Node %lu]: Hello from resilient EDT (%lu, %lu, %lu, %lu)\n", ocrGetLocation(), iter, x, y, z);
     } else if (iter == NUM_ITERS) {
-       PRINTF("[Node %lu]: Hello from epilogue EDT (%lu, %lu)\n", ocrGetLocation(), x, y);
+       PRINTF("[Node %lu]: Hello from epilogue EDT (%lu, %lu, %lu)\n", ocrGetLocation(), x, y, z);
     } else {
        PRINTF("[Node %lu]: Hello from cleanup EDT (%lu, %lu)\n", ocrGetLocation(), x, y);
     }
@@ -164,7 +164,7 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Check for termination condition on this iteration
     if (iter == (NUM_ITERS + 1)) {
         ocrGuid_t shutdownEdt = guidParamv[0];
-        ocrAddDependence(NULL_GUID, shutdownEdt, ITER_INDEX(x, y), DB_MODE_NULL);
+        ocrAddDependence(NULL_GUID, shutdownEdt, ITER_INDEX(x, y, z), DB_MODE_NULL);
         return NULL_GUID;
     }
 
@@ -202,16 +202,18 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         void *ptr_front = NULL;
         void *ptr_back = NULL;
 
-        ocrDbCreate(&db, (void**)&ptr, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE*LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_left_gp, (void**)&ptr_left, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_right_gp, (void**)&ptr_right, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_up_gp, (void**)&ptr_up, sizeof(double) * LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_down_gp, (void**)&ptr_down, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_front_gp, (void**)&ptr_front, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
-        ocrDbCreate(&db_back_gp, (void**)&ptr_back, sizeof(double)* LOCAL_MESH_SZIE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db, (void**)&ptr, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE*LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_left_gp, (void**)&ptr_left, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_right_gp, (void**)&ptr_right, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_up_gp, (void**)&ptr_up, sizeof(double) * LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_down_gp, (void**)&ptr_down, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_front_gp, (void**)&ptr_front, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
+        ocrDbCreate(&db_back_gp, (void**)&ptr_back, sizeof(double)* LOCAL_MESH_SIZE * LOCAL_MESH_SIZE, DB_PROP_RESILIENT, NULL_HINT, NO_ALLOC);
 
         //Perform local computation for output DB of this iteration
-        //doLocalComputation(paramc, paramv, depc, depv, db);
+#if 0
+        doLocalComputation(paramc, paramv, depc, depv, db);
+#else
 
         double* dptr_out = (double *)ptr;
         double* dptr_left_out = (double *)ptr_left;
@@ -220,87 +222,140 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         double* dptr_down_out = (double *)ptr_down;
         double* dptr_front_out = (double *)ptr_front;
         double* dptr_back_out = (double *)ptr_back;
-        double gp_from_left, gp_from_right, gp_from_up, gp_from_down, gp_from_front, gp_from_back;
-
+        double *gp_from_left, *gp_from_right, *gp_from_up, *gp_from_down, *gp_from_front, *gp_from_back;
+        
 
         // Processing Boundary Condition
         if ( x > 0 )
         {
-           gp_from_left = ((double *)depv[1].ptr)[0];
+           gp_from_left = ((double *)depv[1].ptr);
            //PRINTF("[Node %lu]: resilient EDT (%lu, %lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x, y, gp_from_left );
-        }
-        else
-        {
-           gp_from_left = LEFT_BC;
         }
 
         if ( x < XDIM-1 )
         {
-           gp_from_right = ((double *)depv[2].ptr)[0];
+           gp_from_right = ((double *)depv[2].ptr);
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
-        }
-        else
-        {
-           gp_from_right = RIGHT_BC;
         }
 
         if ( y > 0 )
         {
-           gp_from_up = ((double *)depv[3].ptr)[0];
+           gp_from_up = ((double *)depv[3].ptr);
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
-        }
-        else
-        {
-           gp_from_up = UP_BC;
         }
 
         if ( y < YDIM-1 )
         {
-           gp_from_down = ((double *)depv[4].ptr)[0];
+           gp_from_down = ((double *)depv[4].ptr);
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
         }
-        else
-        {
-           gp_from_down = DOWN_BC;
-        }
+
         if ( z > 0 )
         {
-           gp_from_front = ((double *)depv[5].ptr)[0];
+           gp_from_front = ((double *)depv[5].ptr);
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
-        }
-        else
-        {
-           gp_from_up = FRONT_BC;
         }
 
         if ( z < ZDIM-1 )
         {
-           gp_from_back = ((double *)depv[6].ptr)[0];
+           gp_from_back = ((double *)depv[6].ptr);
           // PRINTF("[Node %lu]: resilient EDT (%lu, %lu) uses its only value from left %f\n", ocrGetLocation() , iter, x,gp_from_left );
         }
-        else
-        {
-           gp_from_up = BACK_BC;
-        }
-
-
 
         // Compute Local 3D Domain
 
-#if 0
-        dptr_left_out[0] = dptr_out[0] = (-dptr[0] + 0.5 * (  gp_from_left + dptr[1] ))*0.2 + dptr[0];
-        for ( i = 1; i < LOCAL_MESH_SIZE_X-1; i++ )
+        for ( i = 1; i < LOCAL_MESH_SIZE-1; i++ )
         {
-           dptr_left_out[0] = dptr_out[0] = (-dptr[0] + 0.5 * (  gp_from_left + dptr[1] ))*0.2 + dptr[0];
-           for ( j = 1; j < LOCAL_MESH_SIZE_Y-1; j++ ) 
+
+
+           dptr_out[ ITER_INDEX(x, 0, 0)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                  UP_BC                         +
+                                                  dptr[ITER_INDEX(x, y+1, z)]   +
+                                                  FRONT_BC                      +
+                                                  dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+                 
+           for ( k = 1; k < LOCAL_MESH_SIZE-1; k++ ) 
            {
-               dptr_out[i * (LOCAL_MESH_SIZE_Y) + j] = ( -dptr[i] + 0.5 * (  dptr[i-1] + dptr[i+1] ) ) * 0.2 + dptr[i];
+               dptr_out[ ITER_INDEX(x, y, z)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                   ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                     dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                     UP_BC                         +
+                                                     dptr[ITER_INDEX(x, y+1, z)]   +
+                                                     dptr[ITER_INDEX(x, y, z - 1)] +
+                                                     dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
            }
-           dptr_left_out[0] = dptr_out[0] = (-dptr[0] + 0.5 * (  gp_from_left + dptr[1] ))*0.2 + dptr[0];
+
+           dptr_out[ ITER_INDEX(x, 1,  LOCAL_MESH_SIZE-1)] =   -dptr[ITER_INDEX(x, y, z)]    + 
+                                                ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                  UP_BC                         +
+                                                  dptr[ITER_INDEX(x, y+1, z)]   +
+                                                  dptr[ITER_INDEX(x, y, z - 1)] +
+                                                  BACK_BC ) /6.0 ;
+
+           for ( j = 1; j < LOCAL_MESH_SIZE-1; j++ ) 
+           {
+
+               dptr_out[ ITER_INDEX(x, y, 0)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x, y-1, z)]   +
+                                                  dptr[ITER_INDEX(x, y+1, z)]   +
+                                                  FRONT_BC                      +
+                                                  dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+                 
+               for ( k = 1; k < LOCAL_MESH_SIZE-1; k++ ) 
+               {
+                  dptr_out[ ITER_INDEX(x, y, z)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                   ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                     dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                     dptr[ITER_INDEX(x, y-1, z)]   +
+                                                     dptr[ITER_INDEX(x, y+1, z)]   +
+                                                     dptr[ITER_INDEX(x, y, z - 1)] +
+                                                     dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+               }
+               dptr_out[ ITER_INDEX(x, y, LOCAL_MESH_SIZE-1)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                  dptr[ITER_INDEX(x, y-1, z)]   +
+                                                  dptr[ITER_INDEX(x, y+1, z)]   +
+                                                  dptr[ITER_INDEX(x, y, z - 1)] +
+                                                  BACK_BC ) /6.0 ;
+
+           }
+
+           dptr_out[ ITER_INDEX(x, LOCAL_MESH_SIZE-1, 0)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                            ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                              dptr[ITER_INDEX(x+1, y, z)]   +
+                                                              dptr[ITER_INDEX(x, y-1, z)]   + 
+                                                              DOWN_BC                        +
+                                                              FRONT_BC                      +
+                                                              dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+                 
+           for ( k = 1; k < LOCAL_MESH_SIZE-1; k++ ) 
+           {
+               dptr_out[ ITER_INDEX(x, y, z)] =  -dptr[ITER_INDEX(x, y, z)]    + 
+                                                   ( dptr[ITER_INDEX(x-1, y, z)]   + 
+                                                     dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                     dptr[ITER_INDEX(x, y-1, z)]   +
+                                                     DOWN_BC                         +
+                                                     dptr[ITER_INDEX(x, y, z - 1)] +
+                                                     dptr[ITER_INDEX(x, y, z + 1)] ) /6.0 ;
+           }
+
+           dptr_out[ ITER_INDEX(x,  LOCAL_MESH_SIZE-1,  LOCAL_MESH_SIZE-1)] =   -dptr[ITER_INDEX(x, y, z)]    + 
+                                                                               ( dptr[ITER_INDEX(x-1, y, z)]   +  
+                                                                                 dptr[ITER_INDEX(x+1, y, z)]   + 
+                                                                                 dptr[ITER_INDEX(x, y-1, z)]   +
+                                                                                 DOWN_BC                         +
+                                                                                 dptr[ITER_INDEX(x, y, z - 1)] +
+                                                                                   BACK_BC ) /6.0 ;
         }
-        dptr_right_out[0] =  dptr_out[LOCAL_MESH_SIZE-1] = (-dptr[LOCAL_MESH_SIZE-1] + 0.5 * (  gp_from_right + dptr[LOCAL_MESH_SIZE-2] ))* 0.2 + dptr[LOCAL_MESH_SIZE-1];
-#endif
         //PRINTF("[Node %lu]: Value of DB[%d] is %f in resilient EDT (%lu, %lu, %lu)\n", ocrGetLocation(), 0, dptr[0], iter, x, y);
+        //
+#endif
 
 #if 0
         for( i = 0; i < LOCAL_MESH_SIZE; i++ )
@@ -419,8 +474,6 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
         deps[6] = NULL_GUID;
     }
 
-    //Create EDT
-    ocrGuid_t rankEdt, outputEvent;
 
     //Create EDT
     ocrGuid_t rankEdt, outputEvent;
@@ -477,15 +530,17 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
 
 //Sync EDT used to call shutdown
 ocrGuid_t shutdownFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
-    u64 i, j;
+    u64 i, j, k;
     PRINTF("[Node %lu]: Hello from shutdownEdt\n", ocrGetLocation());
     //Cleanup past iteration events (NUM_ITERS)
     for (i = 0; i < XDIM; i++) {
         for (j = 0; j < YDIM; j++) {
-            if (NUM_ITERS > 1) {
-               ocrGuid_t pEvt;
-               ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i, j), &pEvt);
-               ocrEventDestroy(pEvt);
+            for (k = 0; k < ZDIM; k++) {
+                if (NUM_ITERS > 1) {
+                    ocrGuid_t pEvt;
+                    ocrGuidTableRemove(USER_KEY((NUM_ITERS + 1), i, j, k), &pEvt);
+                    ocrEventDestroy(pEvt);
+                }
             }
         }
     }
@@ -495,7 +550,7 @@ ocrGuid_t shutdownFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
 
 //EDT to start the program
 ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
-    u64 i, j;
+    u64 i, j, k;
     PRINTF("[Node %lu]: Starting mainEdt\n", ocrGetLocation());
 
     //Create the shutdown EDT
@@ -530,7 +585,7 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     ocrGuid_t dbArray_back_gp[ITER_SPACE];
     for (i = 0; i < XDIM; i++) {
         for (j = 0; j < YDIM; j++) {
-            for (j = 0; j < ZDIM; j++) { 
+            for (k = 0; k < ZDIM; k++) { 
                 int ii;
                 //Create a resilient DB for future iteration (iter + 1)
                 ocrGuid_t db = NULL_GUID;
@@ -606,8 +661,8 @@ ocrGuid_t mainEdt(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
                 ocrDbRelease(db_right_gp);
                 ocrDbRelease(db_up_gp);
                 ocrDbRelease(db_down_gp);
-                ocrDbRelease(db_down_front);
-                ocrDbRelease(db_down_back);
+                ocrDbRelease(db_front_gp);
+                ocrDbRelease(db_back_gp);
             //PRINTF("ITER INDEX %d %d\n",ITER_INDEX(i, j), ITER_SPACE);
 
                 dbArray[ITER_INDEX(i, j, k)]          = db;
