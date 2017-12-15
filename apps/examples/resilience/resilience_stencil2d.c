@@ -112,9 +112,9 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Cleanup past iteration (iter - 2) DB and (iter - 1) Events
     ocrGuid_t *guidParamv = (ocrGuid_t*)&(paramv[1 + NUM_DIMS]);
     ocrDbDestroy(guidParamv[1]);
-    if (iter > 3) {
+    if (iter > 2) {
         ocrGuid_t pEvt = NULL_GUID;
-        if (ocrGuidTableRemove(USER_KEY((iter - 2), x, y), &pEvt) == 0) {
+        if (ocrGuidTableRemove(USER_KEY((iter - 1), x, y), &pEvt) == 0) {
             ocrEventDestroy(pEvt);
         }
     }

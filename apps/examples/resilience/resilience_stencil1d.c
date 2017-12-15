@@ -108,9 +108,9 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
     //Cleanup past iteration (iter - 2) DB and (iter - 1) Events
     ocrGuid_t *guidParamv = (ocrGuid_t*)&(paramv[1 + NUM_DIMS]);
     ocrDbDestroy(guidParamv[1]);
-    if (iter > 3) {
+    if (iter > 2) {
         ocrGuid_t pEvt = NULL_GUID;
-        if (ocrGuidTableRemove(USER_KEY((iter - 2), x), &pEvt) == 0) {
+        if (ocrGuidTableRemove(USER_KEY((iter - 1), x), &pEvt) == 0) {
             VPRINTF("[Node %lu](%d, %d): Event Destroy: 0x%lx Key: %d\n", ocrGetLocation(), iter, x, pEvt, USER_KEY((iter - 2), x));
             ocrEventDestroy(pEvt);
         }

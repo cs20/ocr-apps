@@ -132,25 +132,25 @@ ocrGuid_t resilientFunc(u32 paramc, u64* paramv, u32 depc, ocrEdtDep_t depv[]) {
 
     if (iter > 2) {
         ocrGuid_t pEvt;
-        if (ocrGuidTableRemove(USER_KEY_SELF((iter - 2), x, y), &pEvt) == 0)
+        if (ocrGuidTableRemove(USER_KEY_SELF((iter - 1), x, y), &pEvt) == 0)
             ocrEventDestroy(pEvt);
 
         if( x > 0 )
         {
-             if (ocrGuidTableRemove(USER_KEY_LEFT((iter - 2), x, y), &pEvt) == 0)
+             if (ocrGuidTableRemove(USER_KEY_LEFT((iter - 1), x, y), &pEvt) == 0)
                  ocrEventDestroy(pEvt);
         }
         if( x < XDIM-1 ) {
-            if (ocrGuidTableRemove(USER_KEY_RIGHT((iter - 2), x, y), &pEvt) == 0)
+            if (ocrGuidTableRemove(USER_KEY_RIGHT((iter - 1), x, y), &pEvt) == 0)
                 ocrEventDestroy(pEvt);
         }
         if( y > 0 )
         {
-             if (ocrGuidTableRemove(USER_KEY_UP((iter - 2), x, y), &pEvt) == 0)
+             if (ocrGuidTableRemove(USER_KEY_UP((iter - 1), x, y), &pEvt) == 0)
                  ocrEventDestroy(pEvt);
         }
         if( y < YDIM-1 ) {
-            if (ocrGuidTableRemove(USER_KEY_DOWN((iter - 2), x, y), &pEvt) == 0)
+            if (ocrGuidTableRemove(USER_KEY_DOWN((iter - 1), x, y), &pEvt) == 0)
                 ocrEventDestroy(pEvt);
         }
     }*/
